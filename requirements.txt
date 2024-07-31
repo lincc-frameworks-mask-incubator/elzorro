@@ -1,0 +1,11 @@
+astropy
+cdshealpix
+dask[complete]
+hipscat
+hipscat-import
+lsdb
+mocpy
+numpy
+pyarrow
+tqdm
+git+https://github.com/hombit/mom-builder  # requires Rust toolchain, https://rustup.rs/
