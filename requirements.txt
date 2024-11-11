@@ -1,8 +1,8 @@
 astropy
 cdshealpix
 dask[complete]
-hipscat
-hipscat-import
+hats
+hats-import
 lsdb
 mocpy
 numpy

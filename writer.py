@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
-from hipscat.pixel_math.hipscat_id import healpix_to_hipscat_id, HIPSCAT_ID_COLUMN
+from hats.pixel_math.spatial_index import healpix_to_spatial_index, SPATIAL_INDEX_COLUMN
 
 
 class Writer:
@@ -33,7 +33,7 @@ class Writer:
         return pq.ParquetWriter(
             path,
             pa.schema([
-                pa.field(HIPSCAT_ID_COLUMN, pa.uint64()),
+                pa.field(SPATIAL_INDEX_COLUMN, pa.int64()),
                 pa.field('pixel_Norder', pa.uint8()),
                 pa.field('pixel_Npix', pa.uint64()),
                 pa.field(self.col_name, self.col_type),
@@ -42,10 +42,10 @@ class Writer:
         )
 
     def _write_row_group(self, writer, norder, indexes, values):
-        hipscat_index = healpix_to_hipscat_id(norder, indexes)
+        hats_index = healpix_to_spatial_index(norder, indexes.astype(np.int64))
         table = pa.Table.from_arrays(
-            [hipscat_index, np.full(hipscat_index.shape, norder, dtype=np.uint8), indexes, values],
-            names=[HIPSCAT_ID_COLUMN, 'pixel_Norder', 'pixel_Npix', self.col_name]
+            [hats_index, np.full(hats_index.shape, norder, dtype=np.uint8), indexes, values],
+            names=[SPATIAL_INDEX_COLUMN, 'pixel_Norder', 'pixel_Npix', self.col_name]
         )
         writer.write_table(table)
 
@@ -62,6 +62,9 @@ class Writer:
             - indexes: np.array, healpix indexes of the tile.
             - values: np.array, values for the tile.
         """
+        # Skip empty sub-trees
+        if len(tiles) == 0:
+            return
         with self._create_parquet_writer(split_index) as writer:
             for norder, indexes, values in tiles:
                 self._write_row_group(writer, norder, indexes, values)
